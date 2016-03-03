@@ -50,13 +50,16 @@ COURSE_ID = "ctl00_BodyContentPlaceHolder_detselect_dgdCourseHeader" + \
 
 ID_BASE = "ctl00_BodyContentPlaceHolder_detselect_ctl{lec:02d}_ctl02_{item}"
 
-WaitListTotal_ID = \
+# waitlist total
+WAITLIST_TOTAL_ID = \
     ID_BASE.format(lec=LEC_NUM+1,
                    item="WaitListTotal")
-WaitListCap_ID = \
+# waitlist capacity
+WAITLIST_CAP_ID = \
     ID_BASE.format(lec=LEC_NUM+1,
                    item="WaitListCap")
-Status_ID = \
+# waitlist status
+STATUS_ID = \
     ID_BASE.format(lec=LEC_NUM+1,
                    item="Status")
 
@@ -65,9 +68,9 @@ Status_ID = \
 # print(AREA)
 # print(CRS)
 # print(LEC_NUM)
-# print(WaitListTotal_ID)
-# print(WaitListCap_ID)
-# print(Status_ID)
+# print(WAITLIST_TOTAL_ID)
+# print(WAITLIST_CAP_ID)
+# print(STATUS_ID)
 # print(COURSE_ID)
 
 
@@ -80,9 +83,9 @@ def waitlist_detector(soup):
         course = soup.find(id=COURSE_ID).contents[0]
         course = ' '.join(course.split())
 
-        waitlist_total = int(soup.find(id=WaitListTotal_ID).span.contents[0])
-        waitlist_cap = int(soup.find(id=WaitListCap_ID).span.contents[0])
-        status = soup.find(id=Status_ID).span.span.contents[0]
+        waitlist_total = int(soup.find(id=WAITLIST_TOTAL_ID).span.contents[0])
+        waitlist_cap = int(soup.find(id=WAITLIST_CAP_ID).span.contents[0])
+        status = soup.find(id=STATUS_ID).span.span.contents[0]
 
         print("=== {crs}  LEC {lec} ===".
               format(crs=course,

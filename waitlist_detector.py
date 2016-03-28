@@ -1,7 +1,13 @@
 #! /usr/bin/env python3
 
 
-import urllib.request
+from __future__ import print_function
+
+try:
+    import urllib.request as urlrequest
+except:
+    import urllib as urlrequest
+
 from bs4 import BeautifulSoup
 import subprocess
 import sys
@@ -14,6 +20,7 @@ try:
     PARSER = 'lxml'
 except ImportError:
     PARSER = 'html.parser'
+    sys.stderr.write("lxml unavailable, using html.parser instead\n")
 
 
 # following variables are relevant information of the course
@@ -109,7 +116,7 @@ def waitlist_detector(soup):
 def main():
     while True:
         try:
-            page = urllib.request.urlopen(URL)
+            page = urlrequest.urlopen(URL)
             soup = BeautifulSoup(page, PARSER)
 
             if waitlist_detector(soup):
@@ -118,7 +125,7 @@ def main():
             print("query made at {}\n".
                   format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
-        except urllib.request.URLError:
+        except urlrequest.URLError:
             print('*** NETWORK ERROR ***')
             if sys.platform == "darwin":
                 subprocess.call('say ' + 'network error', shell=True)

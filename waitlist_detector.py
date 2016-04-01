@@ -27,8 +27,8 @@ except ImportError:
 # format has to be exact for the program to find the result
 
 TERM = '16S'              # which quarter
-AREA = 'MATH'             # area in all caps, separated by space
-CRS = '61'                # index of the course
+AREA = 'COM SCI'          # area in all caps, separated by space
+CRS = 'M51A'              # index of the course
 LEC_NUM = 1               # lecture number, appears before name of lecturer
 PERIOD = 30               # query will be made every PERIOD second(s)
 
@@ -37,18 +37,22 @@ PERIOD = 30               # query will be made every PERIOD second(s)
 # please do not modify if you don't know what you are doing
 
 TERM = TERM.upper()
-AREA = AREA.upper()
+AREA = ' '.join(AREA.split()).upper()
 # course index require to be 4 digits, not including ending letter
+# if 'M' exists, only add it to the end
+CRS = CRS.upper()
 CRS = CRS.rjust(4, '0') if not CRS[-1].isalpha() \
-    else CRS[:-1].rjust(4, '0') + CRS[-1].upper()
+    else CRS[:-1].rjust(4, '0') + CRS[-1]
+if 'M' in CRS:
+    CRS = CRS.replace('M', '0') + ' M'
 
 URL = "http://www.registrar.ucla.edu/schedule/detselect.aspx?" + \
       "termsel={term}&subareasel={area}&idxcrs={crs}".\
       format(term=TERM,
-             # better leave AREA like this, HTML id requires AREA to be
-             # sparated by space
+             # better leave AREA/CRS like this, HTML id requires AREA/CRS
+             # to be sparated by space
              area='+'.join(AREA.split()),
-             crs=CRS)
+             crs='+'.join(CRS.split()))
 
 # ID refers to HTML id
 COURSE_ID = "ctl00_BodyContentPlaceHolder_detselect_dgdCourseHeader" + \

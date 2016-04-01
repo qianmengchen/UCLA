@@ -38,8 +38,9 @@ PERIOD = 30               # query will be made every PERIOD second(s)
 
 TERM = TERM.upper()
 AREA = AREA.upper()
+# course index require to be 4 digits, not including ending letter
 CRS = CRS.rjust(4, '0') if not CRS[-1].isalpha() \
-      else CRS[:-1].rjust(4, '0') + CRS[-1].upper()
+    else CRS[:-1].rjust(4, '0') + CRS[-1].upper()
 
 URL = "http://www.registrar.ucla.edu/schedule/detselect.aspx?" + \
       "termsel={term}&subareasel={area}&idxcrs={crs}".\
@@ -55,19 +56,36 @@ COURSE_ID = "ctl00_BodyContentPlaceHolder_detselect_dgdCourseHeader" + \
             format(area=AREA,
                    crs=CRS)
 
+INSTRUCTOR_ID = "ctl00_BodyContentPlaceHolder_detselect_dgdLectureHeader" + \
+                "{area}{crs}_ctl02_lblGenericMessage2".\
+                format(area=AREA,
+                       crs=CRS)
+
 ID_BASE = "ctl00_BodyContentPlaceHolder_detselect_ctl{lec:02d}_ctl02_{item}"
 
+# Days, e.g. MWF
+DAYS_ID = \
+    ID_BASE.format(lec=LEC_NUM + 1,
+                   item="lblDays")
+# time start, e.g. 10:00A
+TIMESTART_ID = \
+    ID_BASE.format(lec=LEC_NUM + 1,
+                   item="lblTimeStart")
+# time end, e.g. 11:50A
+TIMEEND_ID = \
+    ID_BASE.format(lec=LEC_NUM + 1,
+                   item="lblTimeEnd")
 # waitlist total
 WAITLIST_TOTAL_ID = \
-    ID_BASE.format(lec=LEC_NUM+1,
+    ID_BASE.format(lec=LEC_NUM + 1,
                    item="WaitListTotal")
 # waitlist capacity
 WAITLIST_CAP_ID = \
-    ID_BASE.format(lec=LEC_NUM+1,
+    ID_BASE.format(lec=LEC_NUM + 1,
                    item="WaitListCap")
 # waitlist status
 STATUS_ID = \
-    ID_BASE.format(lec=LEC_NUM+1,
+    ID_BASE.format(lec=LEC_NUM + 1,
                    item="Status")
 
 # print(URL)
@@ -75,10 +93,11 @@ STATUS_ID = \
 # print(AREA)
 # print(CRS)
 # print(LEC_NUM)
+# print(COURSE_ID)
+# print(INSTRUCTOR_ID)
 # print(WAITLIST_TOTAL_ID)
 # print(WAITLIST_CAP_ID)
 # print(STATUS_ID)
-# print(COURSE_ID)
 
 
 def waitlist_detector(soup):
@@ -90,6 +109,12 @@ def waitlist_detector(soup):
         course = soup.find(id=COURSE_ID).contents[0]
         course = ' '.join(course.split())
 
+        instructor = soup.find(id=INSTRUCTOR_ID).contents[0].strip()
+
+        days = soup.find(id=DAYS_ID).span.contents[0].strip()
+        time_start = soup.find(id=TIMESTART_ID).span.contents[0].strip()
+        time_end = soup.find(id=TIMEEND_ID).span.contents[0].strip()
+
         waitlist_total = int(soup.find(id=WAITLIST_TOTAL_ID).span.contents[0])
         waitlist_cap = int(soup.find(id=WAITLIST_CAP_ID).span.contents[0])
         status = soup.find(id=STATUS_ID).span.span.contents[0]
@@ -97,6 +122,9 @@ def waitlist_detector(soup):
         print("=== {crs}  LEC {lec} ===".
               format(crs=course,
                      lec=LEC_NUM))
+        print("=== {ins}  {time} ===".
+              format(ins=instructor,
+                     time=' '.join((days, time_start, time_end))))
         print("Total: {}  Capacity: {}  Status: {}".
               format(waitlist_total,
                      waitlist_cap,
@@ -104,21 +132,25 @@ def waitlist_detector(soup):
 
         return waitlist_cap > waitlist_total or status != 'Closed'
 
-    except ValueError:
-        print("*** cannot understand query ***")
-        return False
-
-    except AttributeError:
-        print("*** cannot understand query ***")
+    except (ValueError, AttributeError):
+        print("*** cannot understand query ***", file=sys.stderr)
         return False
 
 
 def main():
+    # print("Welcome to class scrapper")
+    # page = urlrequest.urlopen(URL)
+    # soup = BeautifulSoup(page, PARSER)
+
+    # print("=== Class Information ===")
+    # print("Course Title: {}".format())
+
     while True:
         try:
             page = urlrequest.urlopen(URL)
             soup = BeautifulSoup(page, PARSER)
 
+            # waitlist is open
             if waitlist_detector(soup):
                 break
 
@@ -126,12 +158,12 @@ def main():
                   format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
         except urlrequest.URLError:
-            print('*** NETWORK ERROR ***')
+            print('*** NETWORK ERROR ***', file=sys.stderr)
             if sys.platform == "darwin":
                 subprocess.call('say ' + 'network error', shell=True)
 
         except Exception as ex:
-            print('*** NETWORK ERROR ***')
+            print('*** UNKNOWN ERROR ***', file=sys.stderr)
             print(ex)
 
         time.sleep(PERIOD)
@@ -142,7 +174,7 @@ def main():
     while True:
         if sys.platform == "darwin":
             subprocess.call('say ' + 'waitlist open', shell=True)
-        print('\a'*10, end='')
+        print('\a' * 10, end='')
 
 
 if __name__ == '__main__':

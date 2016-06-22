@@ -1,5 +1,28 @@
 #! /usr/bin/env python3
 
+"""
+*** DEPRECATED as of fall 2016 ***
+UCLA made its registrar dynamic with a lot of javascript,
+and the query url format has changed.
+A rework of this project is needed.
+
+* NOTE: the old static site is still available as a lagacy feature,
+this program still works as of now.
+
+
+WaitList Detector
+
+for usage, run program with '-h' flag
+    python waitlist_detector.py -h
+
+required python packages:
+    BeautifulSoup4
+    lxml (optional, for better performance)
+
+supposed to work under both python2 and python3,
+if not, please file an issue
+"""
+
 
 from __future__ import print_function
 
@@ -66,6 +89,7 @@ def course_info(soup):
 
     except (ValueError, AttributeError):
         print("*** cannot understand query ***", file=sys.stderr)
+        print("URL for this query:", URL)
         return None
 
 
@@ -79,10 +103,6 @@ def course_info_str(info):
 
 
 def waitlist_detector(soup):
-    # print(soup.body.form.center.div.center.table.
-    #       find_all('tr')[1].
-    #       find_all('td')[1].prettify())
-
     info = course_info(soup)
     if info is None:
         return False
@@ -132,10 +152,13 @@ def main():
 
     # agressive notification
     print("\n\nWAITLIST OPEN !!!")
-    webbrowser.open_new(URL)
+    try:
+        webbrowser.open_new(URL)
+    except Exception:
+        pass
     while True:
         if sys.platform == "darwin":
-            subprocess.call('say ' + 'waitlist open', shell=True)
+            subprocess.call(['say', 'waitlist open'])
         print('\a' * 10, end='')
 
 
@@ -171,16 +194,18 @@ if __name__ == '__main__':
     CRS = CRS.upper()
     CRS = CRS.rjust(4, '0') if not CRS[-1].isalpha() \
         else CRS[:-1].rjust(4, '0') + CRS[-1]
-    if 'M' in CRS:
+    if 'CM' in CRS:
+        CRS = '0' + CRS[2:] + "  CM"
+    elif 'M' in CRS:
         CRS = CRS.replace('M', '0') + ' M'
 
-    URL = "http://www.registrar.ucla.edu/schedule/detselect.aspx?" + \
+    URL = "http://legacy.registrar.ucla.edu/schedule/detselect.aspx?" + \
           "termsel={term}&subareasel={area}&idxcrs={crs}".\
           format(term=TERM,
                  # better leave AREA/CRS like this, HTML id requires AREA/CRS
                  # to be sparated by space
-                 area='+'.join(AREA.split()),
-                 crs='+'.join(CRS.split()))
+                 area=AREA.replace(' ', '+'),
+                 crs=CRS.replace(' ', '+'))
 
     # ID refers to HTML id
     COURSE_ID = "ctl00_BodyContentPlaceHolder_detselect_dgdCourseHeader" + \

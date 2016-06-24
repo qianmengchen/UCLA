@@ -46,6 +46,8 @@ except ImportError:
     PARSER = 'html.parser'
     sys.stderr.write("lxml unavailable, using html.parser instead\n")
 
+RED = "\033[1;31m"
+END = "\033[1;00m"
 
 # following variables are relevant information of the course
 # format has to be exact for the program to find the result
@@ -66,7 +68,7 @@ def course_info(soup):
         course = ' '.join(soup.find(id=COURSE_ID).contents[0].split())
 
         # instructors has duplicate HTML ID !!!
-        instructor = soup.findAll(id=INSTRUCTOR_ID)[LEC_NUM - 1].\
+        instructor = soup.findAll(id=INSTRUCTOR_ID)[LEC_NUM-1].\
             contents[0].strip()
 
         days = soup.find(id=DAYS_ID).span.contents[0].strip()
@@ -84,13 +86,13 @@ def course_info(soup):
                 "time_end": time_end,
                 "waitlist_total": waitlist_total,
                 "waitlist_cap": waitlist_cap,
-                "waitlist_detector": waitlist_detector,
                 "status": status}
 
     except (ValueError, AttributeError):
-        print("*** cannot understand query ***", file=sys.stderr)
-        print("URL for this query:", URL)
-        return None
+        print(RED + "*** cannot understand query ***" + END,
+              file=sys.stderr)
+        print("URL for this query:", URL, sep='\n', end='\n\n')
+        raise RuntimeError("Not a valid query")
 
 
 def course_info_str(info):
@@ -125,7 +127,8 @@ def main():
     soup = BeautifulSoup(page, PARSER)
 
     print("=== Course Information ===")
-    print(course_info_str(course_info(soup)), end='\n\n')
+    course_information = course_info_str(course_info(soup))
+    print(course_information, end='\n\n')
 
     while True:
         try:
@@ -140,18 +143,18 @@ def main():
                   format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
         except urlrequest.URLError:
-            print('*** NETWORK ERROR ***', file=sys.stderr)
+            print(RED + '*** NETWORK ERROR ***' + END, file=sys.stderr)
             if sys.platform == "darwin":
-                subprocess.call('say ' + 'network error', shell=True)
+                subprocess.call(['say', 'network error'])
 
         except Exception as ex:
-            print('*** UNKNOWN ERROR ***', file=sys.stderr)
-            print(ex)
+            print(RED + '*** UNKNOWN ERROR ***' + END, file=sys.stderr)
+            print(ex, file=sys.stderr)
 
         time.sleep(PERIOD)
 
     # agressive notification
-    print("\n\nWAITLIST OPEN !!!")
+    print("\n\nWAITLIST OPEN !!!\n")
     try:
         webbrowser.open_new(URL)
     except Exception:
@@ -258,4 +261,7 @@ if __name__ == '__main__':
     # print(WAITLIST_CAP_ID)
     # print(STATUS_ID)
 
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass

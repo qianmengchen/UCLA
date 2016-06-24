@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python
 
 """
 *** DEPRECATED as of fall 2016 ***
@@ -130,7 +130,7 @@ def waitlist_detector(soup):
         info["status"] != 'Closed' and info["status"] != "Cancelled"
 
 
-def notification(message):
+def notification():
 
     if RECIPIENT:
         print(RECIPIENT)
@@ -212,7 +212,8 @@ if __name__ == '__main__':
     CRS = args.crs
     LEC_NUM = args.num
     PERIOD = args.period
-    RECIPIENT = ', '.join(args.email)
+    print(args.email)
+    RECIPIENT = '' if args.email is None else ', '.join(args.email)
 
     TERM = TERM.upper()
     AREA = ' '.join(AREA.split()).upper()

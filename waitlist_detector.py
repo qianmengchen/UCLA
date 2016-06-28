@@ -135,7 +135,7 @@ def sendmail(msg):
                             stdin=subprocess.PIPE)
     mail.communicate(input=msg.encode())
     if mail.returncode != 0:
-        print(RED_BOLD + "error sending email" + END, file=sys.stderr)
+        print(RED_BOLD + "*** error sending email ***" + END, file=sys.stderr)
     else:
         print("The following email is sent to", RECIPIENT, end='\n\n')
         print(msg)
@@ -212,7 +212,7 @@ if __name__ == '__main__':
     parser.add_argument('--num', '-n', type=int, default=1,
                         help="lecture number, appears before name "
                         "of the lecturer, defaults to %(default)s")
-    parser.add_argument('--period', '-p', type=int, default=30,
+    parser.add_argument('--period', '-p', type=float, default=30,
                         help="query to be made every [period] "
                         "second(s), defaults to %(default)s")
     parser.add_argument('--email', nargs='+', default=[],

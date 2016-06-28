@@ -29,7 +29,7 @@ from __future__ import print_function
 try:
     import urllib.request as urlrequest
 except:
-    import urllib as urlrequest
+    import urllib2 as urlrequest
 
 from bs4 import BeautifulSoup
 import subprocess
@@ -164,17 +164,18 @@ def notification(info):
 
 def main():
     print("Welcome to class scrapper\n")
-    page = urlrequest.urlopen(URL)
-    soup = BeautifulSoup(page, PARSER)
 
-    print("=== Course Information ===")
-    course_information = course_info_str(course_info(soup))
-    print(course_information, end='\n\n')
-
+    nth = 1
     while True:
         try:
             page = urlrequest.urlopen(URL)
             soup = BeautifulSoup(page, PARSER)
+
+            if nth == 1:
+                print("=== Course Information ===")
+                course_information = course_info_str(course_info(soup))
+                print(course_information, end='\n\n')
+            nth += 1
 
             # waitlist is open
             if waitlist_detector(soup):
@@ -183,13 +184,16 @@ def main():
             print("updated at {}\n".
                   format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
-        except urlrequest.URLError:
+        except urlrequest.URLError as ex:
             print(RED_BOLD + '*** NETWORK ERROR ***' + END, file=sys.stderr)
+            print(ex.reason, file=sys.stderr)
             if sys.platform == "darwin":
                 subprocess.call(['say', 'network error'])
 
-        except Exception as ex:
-            print(RED_BOLD + '*** UNKNOWN ERROR ***' + END, file=sys.stderr)
+        except urlrequest.HTTPError as ex:
+            print(RED_BOLD + '*** HTTP ERROR ***' + END, file=sys.stderr)
+            print(RED_BOLD + "This error should not happen!" + END,
+                  file=sys.stderr)
             print(ex, file=sys.stderr)
 
         time.sleep(PERIOD)

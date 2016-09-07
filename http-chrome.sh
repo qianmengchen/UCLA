@@ -1,12 +1,12 @@
 #!/bin/sh
 
-if [ -z $1 ]
+if [ -z "$1" ]
 then
     echo "Usage: $0 <hostname>"
     exit 1
 fi
 
-cat | nc $1 80 <<EOF
+cat | nc "$1" 80 <<EOF
 GET / HTTP/1.1
 Host: $1
 Connection: keep-alive

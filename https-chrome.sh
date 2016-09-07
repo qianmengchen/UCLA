@@ -18,7 +18,7 @@ EOF
 )
 
 # echo "$request"
-{ echo "$request"; cat /dev/stdin; } | ncat --ssl $1 443
-# socket connection will close if server side gets 0 byte with recv
-# recv(521) == 0 (EOF from client side)
-# so keep connection open by catting stdin
+{ echo "$request"; cat /dev/stdin; } |
+     ncat --ssl "$1" 443
+# somehow ncat would terminate connection when stdin is closed
+# keep connection open by catting stdin

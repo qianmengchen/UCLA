@@ -134,7 +134,7 @@ def sendmail(msg, subject):
     return mail.returncode
 
 
-def notify_success(info, status = "Waitlist Open"):
+def notify_success(info, status="Waitlist Open"):
     if RECIPIENT:
         return sendmail(
             MSG.format(course=info,
@@ -184,6 +184,7 @@ def main():
                         "URL formed for this query: {}".format(URL)
             error_msg = ERR_MSG.format(error=type(ex).__name__,
                                        exception=exception)
+            print(error_msg, file=sys.stderr)
             if RECIPIENT:
                 sendmail(error_msg, "Invalid Query")
             else:
@@ -222,11 +223,11 @@ def main():
     print("\n\nWAITLIST OPEN !!!\n")
     return notify_success(course_information)
 
-def signal_term_handler(signal, frame):
-    notify_success("got SIGTERM", status = "Error!")
-    sys.exit(0)
 
-signal.signal(signal.SIGTERM, signal_term_handler)
+def signal_handler(sig, frame):
+    sendmail("caught signal {}, exiting".format(sig), subject="Error!")
+    sys.exit(1)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog=sys.argv[0],
@@ -253,27 +254,27 @@ if __name__ == '__main__':
 
     TERM = AREA = CRS = LEC_NUM = PERIOD = RECIPIENT = ''
 
-    inputJson = {}
-
     if args.file:
         with open(args.file, "r") as f:
-            inputJson = json.load(f)
-        TERM = inputJson["term"]
-        AREA = inputJson["area"]
-        CRS = inputJson["crs"]
-        LEC_NUM = inputJson["num"]
-        if "period" in inputJson:
-            PERIOD = inputJson["period"]
+            input_json = json.load(f)
+        TERM = input_json["term"]
+        AREA = input_json["area"]
+        CRS = input_json["crs"]
+        if "num" in input_json:
+            LEC_NUM = input_json["num"]
+        if "period" in input_json:
+            PERIOD = input_json["period"]
         else:
             PERIOD = args.period
-        RECIPIENT = inputJson["email"]
+        if "email" in input_json:
+            RECIPIENT = ','.join(input_json["email"])
     else:
         TERM = args.term
         AREA = args.area
         CRS = args.crs
         LEC_NUM = args.num
         PERIOD = args.period
-        RECIPIENT = ', '.join(args.email)
+        RECIPIENT = ','.join(args.email)
 
     TERM = TERM.upper()
     AREA = ' '.join(AREA.split()).upper()
@@ -346,8 +347,10 @@ if __name__ == '__main__':
     # print(WAITLIST_CAP_ID)
     # print(STATUS_ID)
 
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGHUP, signal_handler)
+
     try:
         sys.exit(main())
     except KeyboardInterrupt:
-        sys.exit(1)
-        
+        sys.exit(0)

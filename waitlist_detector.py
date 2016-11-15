@@ -224,8 +224,8 @@ def main():
     return notify_success(course_information)
 
 
-def signal_handler(signal, frame):
-    sendmail("caught signal {}, exiting".format(signal), subject="Error!")
+def signal_handler(sig, frame):
+    sendmail("caught signal {}, exiting".format(sig), subject="Error!")
     sys.exit(1)
 
 

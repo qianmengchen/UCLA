@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 """
 *** DEPRECATED as of fall 2016 ***
@@ -39,6 +39,8 @@ import webbrowser
 import time
 from datetime import datetime
 import argparse
+import json
+import signal
 
 try:
     import lxml
@@ -132,12 +134,12 @@ def sendmail(msg, subject):
     return mail.returncode
 
 
-def notify_success(info):
+def notify_success(info, status = "Waitlist Open"):
     if RECIPIENT:
         return sendmail(
             MSG.format(course=info,
                        time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
-            subject="Waitlist Open")
+            subject=status)
 
     # local notification
     try:
@@ -220,16 +222,21 @@ def main():
     print("\n\nWAITLIST OPEN !!!\n")
     return notify_success(course_information)
 
+def signal_term_handler(signal, frame):
+    notify_success("got SIGTERM", status = "Error!")
+    sys.exit(0)
+
+signal.signal(signal.SIGTERM, signal_term_handler)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog=sys.argv[0],
                                      description="waitlist detecter "
                                      "tailored for UCLA registrar")
-    parser.add_argument('--term', '-t', required=True,
+    parser.add_argument('--term', '-t',
                         help="which quarter")
-    parser.add_argument('--area', '-a', required=True,
+    parser.add_argument('--area', '-a',
                         help="area of study/major")
-    parser.add_argument('--crs', '-c', required=True,
+    parser.add_argument('--crs', '-c',
                         help="course index")
     parser.add_argument('--num', '-n', type=int, default=1,
                         help="lecture number, appears before name "
@@ -240,15 +247,33 @@ if __name__ == '__main__':
     parser.add_argument('--email', nargs='+', default=[],
                         help="send notification email to recipient(s). "
                         "Assume `mail' is installed on your system")
+    parser.add_argument('--file', '-f', help="input file for arguments")
 
     args = parser.parse_args()
 
-    TERM = args.term
-    AREA = args.area
-    CRS = args.crs
-    LEC_NUM = args.num
-    PERIOD = args.period
-    RECIPIENT = ', '.join(args.email)
+    TERM = AREA = CRS = LEC_NUM = PERIOD = RECIPIENT = ''
+
+    inputJson = {}
+
+    if args.file:
+        with open(args.file, "r") as f:
+            inputJson = json.load(f)
+        TERM = inputJson["term"]
+        AREA = inputJson["area"]
+        CRS = inputJson["crs"]
+        LEC_NUM = inputJson["num"]
+        if "period" in inputJson:
+            PERIOD = inputJson["period"]
+        else:
+            PERIOD = args.period
+        RECIPIENT = inputJson["email"]
+    else:
+        TERM = args.term
+        AREA = args.area
+        CRS = args.crs
+        LEC_NUM = args.num
+        PERIOD = args.period
+        RECIPIENT = ', '.join(args.email)
 
     TERM = TERM.upper()
     AREA = ' '.join(AREA.split()).upper()
@@ -325,3 +350,4 @@ if __name__ == '__main__':
         sys.exit(main())
     except KeyboardInterrupt:
         sys.exit(1)
+        
